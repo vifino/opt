@@ -98,10 +98,27 @@ motherfuckingenterevent(xcb_generic_event_t *e)
 {
 	xcb_enter_notify_event_t *ee;
 
+	/*
+	 * +-------------------------------------+-------+-----------------+------------------+-----------------+
+	 * | EVENT_NAME                          | VALUE | CURSOR_MOVEMENT | WINDOW_HIERARCHY | EVENT_RAISED_ON |
+	 * +-------------------------------------+-------+-----------------+------------------+-----------------+
+	 * | XCB_NOTIFY_DETAIL_ANCESTOR          |     0 | A --> B         | A < B            | B               |
+	 * | XCB_NOTIFY_DETAIL_VIRTUAL           |     1 | A <-> C         | A > B > C        | B               |
+	 * | XCB_NOTIFY_DETAIL_INFERIOR          |     2 | A --> B         | B > A            | B               |
+	 * | XCB_NOTIFY_DETAIL_NONLINEAR         |     3 | A --> B         | C > A and C > B  | B               |
+	 * | XCB_NOTIFY_DETAIL_NONLINEAR_VIRTUAL |     4 | A --> B         | C > C1 > A and   | C1              |
+	 * |                                     |       |                 | C > C2 > B       | C2              |
+	 * | XCB_NOTIFY_DETAIL_POINTER           |     5 | * --> A         | *                | WID under cursor|
+	 * | XCB_NOTIFY_DETAIL_POINTER_ROOT      |     6 | * --> A         | *                | WID under cursor|
+	 * |                                     |       |                 |                  | and its root    |
+	 * | XCB_NOTIFY_DETAIL_NONE              |     7 | discard event   |                  |                 |
+	 * +-------------------------------------+-------+-----------------+------------------+-----------------+
+	 */
 	ee = (xcb_enter_notify_event_t*)e;
-	if (ee->detail == 0 && 
-			(ee->mode == XCB_NOTIFY_MODE_NORMAL ||
-			 ee->mode == XCB_NOTIFY_MODE_UNGRAB))
+	if (ee->detail == XCB_NOTIFY_DETAIL_POINTER ||
+	    ee->detail == XCB_NOTIFY_DETAIL_POINTER_ROOT ||
+	    ee->mode == XCB_NOTIFY_MODE_NORMAL ||
+	    ee->mode == XCB_NOTIFY_MODE_UNGRAB)
 		return 1;
 
 	return 0;
